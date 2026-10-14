@@ -1,4 +1,4 @@
-# Novel Inlay 0.8.0
+# Novel Inlay 0.8.1
 
 An Android Studio plugin for reading TXT novels beside the caret without modifying source code. Includes a local bookshelf, chapter navigation, manual or timed paging, and persistent reading progress.
 
@@ -7,7 +7,7 @@ An Android Studio plugin for reading TXT novels beside the caret without modifyi
 ## 安装和使用
 
 1. Android Studio → **Settings / Preferences → Plugins → 齿轮 → Install Plugin from Disk…**。
-2. 选择 `dist/novel-inlay-0.8.0.zip`，按 IDE 提示重启。
+2. 选择 `dist/novel-inlay-0.8.1.zip`，按 IDE 提示重启。
 3. 打开项目和代码文件，在 **Tools → Novel Inlay → 导入 TXT 小说…** 选择小说。可先用附带的 `sample.txt`。
 4. 点击代码，小说就会出现在主光标上方；默认每 8 秒自动前进一页。
 5. **Tools → Novel Inlay → 设置翻段间隔…** 可输入 **1–3600 秒**的整数。修改后重新计时，不会把手动模式切回自动。
@@ -19,7 +19,7 @@ An Android Studio plugin for reading TXT novels beside the caret without modifyi
 
 手动模式保留当前文字，便于慢读；一次点击前进一页（当前设置的正文行数），不向代码插入换行。读到最后一段自动停止，不从头循环。没有增加字体设置。
 
-从 0.1.0–0.7.0 升级时，在 **Install Plugin from Disk…** 中直接选择 0.8.0 安装包并重启 IDE；插件 ID 与数据位置不变，原有小说及进度保留。原来的“暂停”状态对应手动模式；已有间隔设置保留，未设置时默认 8 秒。模式与间隔会保存，重新导入小说也保持当前选择。
+从 0.1.0–0.8.0 升级时，在 **Install Plugin from Disk…** 中直接选择 0.8.1 安装包并重启 IDE；插件 ID 与数据位置不变，原有小说及进度保留。原来的“暂停”状态对应手动模式；已有间隔设置保留，未设置时默认 8 秒。模式与间隔会保存，重新导入小说也保持当前选择。
 
 ## 我的书架
 

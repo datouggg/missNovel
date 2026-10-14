@@ -19,5 +19,5 @@ find src/test/java -name '*.java' > build/tests.txt
 "$jdk/bin/java" -ea -cp "build/test-classes:build/classes:$studio/lib/*" dev.novelinlay.NovelShelfTest
 "$jdk/bin/java" -ea --add-modules jdk.httpserver -cp "build/test-classes:build/classes:$studio/lib/*" dev.novelinlay.QishuxiaSourceTest
 "$jdk/bin/jar" --create --file build/package/novel-inlay/lib/novel-inlay.jar -C build/classes .
-(cd build/package && zip -q -r ../../dist/novel-inlay-0.8.0.zip novel-inlay)
-echo "已生成：$PWD/dist/novel-inlay-0.8.0.zip"
+(cd build/package && zip -q -r ../../dist/novel-inlay-0.8.1.zip novel-inlay)
+echo "已生成：$PWD/dist/novel-inlay-0.8.1.zip"
