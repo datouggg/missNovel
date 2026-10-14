@@ -1,0 +1,28 @@
+<idea-plugin>
+    <id>dev.novelinlay.reader</id>
+    <name>Novel Inlay</name>
+    <version>0.8.0</version>
+    <vendor>Novel Inlay</vendor>
+    <description><![CDATA[在光标上方以注释样式阅读 TXT 小说。支持本地书架与多书切换、本地导入或按书名及作者搜索奇书网并选择下载、关闭/开启显示、自定义正文行数、章节识别与选择跳转、自定义自动翻段间隔、点击小说手动翻段，记住设置和每本书的进度，不修改源代码。]]></description>
+    <idea-version since-build="243" until-build="243.*"/>
+    <depends>com.intellij.modules.platform</depends>
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="dev.novelinlay.NovelReader"/>
+        <postStartupActivity implementation="dev.novelinlay.ReaderStartup"/>
+    </extensions>
+    <actions>
+        <group id="NovelInlay.Menu" text="Novel Inlay" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="NovelInlay.Bookshelf" class="dev.novelinlay.ReaderActions$Bookshelf" text="我的书架…"/>
+            <action id="NovelInlay.Import" class="dev.novelinlay.ReaderActions$Import" text="导入 TXT 小说…"/>
+            <action id="NovelInlay.Search" class="dev.novelinlay.ReaderActions$Search" text="搜索并下载小说…"/>
+            <action id="NovelInlay.Visibility" class="dev.novelinlay.ReaderActions$Visibility" text="关闭小说显示"/>
+            <action id="NovelInlay.DisplayLines" class="dev.novelinlay.ReaderActions$DisplayLines" text="设置显示行数…"/>
+            <action id="NovelInlay.Chapters" class="dev.novelinlay.ReaderActions$Chapters" text="选择章节…"/>
+            <action id="NovelInlay.Toggle" class="dev.novelinlay.ReaderActions$Toggle" text="切换自动 / 手动翻段"/>
+            <action id="NovelInlay.Interval" class="dev.novelinlay.ReaderActions$Interval" text="设置翻段间隔…"/>
+            <action id="NovelInlay.Previous" class="dev.novelinlay.ReaderActions$Previous" text="上一页"/>
+            <action id="NovelInlay.Next" class="dev.novelinlay.ReaderActions$Next" text="下一页"/>
+        </group>
+    </actions>
+</idea-plugin>
