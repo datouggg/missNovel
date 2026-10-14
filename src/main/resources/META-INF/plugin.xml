@@ -1,12 +1,12 @@
 <idea-plugin>
     <id>dev.novelinlay.reader</id>
     <name>Novel Inlay</name>
-    <version>0.8.1</version>
+    <version>0.8.2</version>
     <vendor>Novel Inlay</vendor>
     <description><![CDATA[Novel Inlay lets you read TXT novels beside the editor caret without modifying source code. Features include a local bookshelf, chapter navigation, adjustable display lines, manual or timed paging, and persistent reading progress. You can import local TXT files or search and download novels from Qishuxia by title and author.
 <p>在光标上方以注释样式阅读 TXT 小说。支持本地书架与多书切换、本地导入或按书名及作者搜索奇书网并选择下载、关闭/开启显示、自定义正文行数、章节识别与选择跳转、自定义自动翻段间隔、点击小说手动翻段，记住设置和每本书的进度，不修改源代码。</p>]]></description>
-    <change-notes><![CDATA[Fix the plugin description for Marketplace upload by placing the English introduction first. Reading features are unchanged.]]></change-notes>
-    <idea-version since-build="243" until-build="243.*"/>
+    <change-notes><![CDATA[Expand IDE compatibility to IntelliJ Platform 243 through 262 (IDEA 2024.3 through 2026.2).]]></change-notes>
+    <idea-version since-build="243" until-build="262.*"/>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="dev.novelinlay.NovelReader"/>

@@ -1,13 +1,13 @@
-# Novel Inlay 0.8.1
+# Novel Inlay 0.8.2
 
-An Android Studio plugin for reading TXT novels beside the caret without modifying source code. Includes a local bookshelf, chapter navigation, manual or timed paging, and persistent reading progress.
+An IntelliJ Platform plugin for reading TXT novels beside the caret without modifying source code. Includes a local bookshelf, chapter navigation, manual or timed paging, and persistent reading progress.
 
-在 Android Studio 光标上方，以注释样式阅读本地 TXT 小说。文字由编辑器 Block Inlay 绘制，不进入 Document、源文件、剪贴板代码或 Git diff。
+在 Android Studio / IntelliJ IDEA 光标上方，以注释样式阅读本地 TXT 小说。文字由编辑器 Block Inlay 绘制，不进入 Document、源文件、剪贴板代码或 Git diff。
 
 ## 安装和使用
 
-1. Android Studio → **Settings / Preferences → Plugins → 齿轮 → Install Plugin from Disk…**。
-2. 选择 `dist/novel-inlay-0.8.1.zip`，按 IDE 提示重启。
+1. Android Studio / IntelliJ IDEA → **Settings / Preferences → Plugins → 齿轮 → Install Plugin from Disk…**。
+2. 选择 `dist/novel-inlay-0.8.2.zip`，按 IDE 提示重启。
 3. 打开项目和代码文件，在 **Tools → Novel Inlay → 导入 TXT 小说…** 选择小说。可先用附带的 `sample.txt`。
 4. 点击代码，小说就会出现在主光标上方；默认每 8 秒自动前进一页。
 5. **Tools → Novel Inlay → 设置翻段间隔…** 可输入 **1–3600 秒**的整数。修改后重新计时，不会把手动模式切回自动。
@@ -19,7 +19,7 @@ An Android Studio plugin for reading TXT novels beside the caret without modifyi
 
 手动模式保留当前文字，便于慢读；一次点击前进一页（当前设置的正文行数），不向代码插入换行。读到最后一段自动停止，不从头循环。没有增加字体设置。
 
-从 0.1.0–0.8.0 升级时，在 **Install Plugin from Disk…** 中直接选择 0.8.1 安装包并重启 IDE；插件 ID 与数据位置不变，原有小说及进度保留。原来的“暂停”状态对应手动模式；已有间隔设置保留，未设置时默认 8 秒。模式与间隔会保存，重新导入小说也保持当前选择。
+从 0.1.0–0.8.1 升级时，在 **Install Plugin from Disk…** 中直接选择 0.8.2 安装包并重启 IDE；插件 ID 与数据位置不变，原有小说及进度保留。原来的“暂停”状态对应手动模式；已有间隔设置保留，未设置时默认 8 秒。模式与间隔会保存，重新导入小说也保持当前选择。
 
 ## 我的书架
 
@@ -74,7 +74,18 @@ An Android Studio plugin for reading TXT novels beside the caret without modifyi
 
 ## 兼容范围
 
-本包针对本机 **Android Studio 2024.3.2，AI-243.26053.27.2432.13536105，JBR 21** 构建。插件描述符限定平台 **243.***；没有声称兼容其他平台分支。实现仅依赖 IntelliJ Platform，但其他 IDE 尚未验证。
+最低要求 **IntelliJ IDEA 2024.3 / IntelliJ Platform 243**，上限为 **2026.2.x / 262.***。Android Studio 按 About 中的底层平台 Build 判断，不直接按产品年份判断。插件仍使用 Android Studio 2024.3.2 的 SDK 和 JBR 21 构建，保证基线不随上限一起提高。
+
+0.8.2 扩大兼容范围，阅读功能及数据格式不变。高版本可能删除或修改平台 API，因此每次扩大上限都应运行官方 Plugin Verifier，不能仅凭版本号承诺兼容。
+
+验证范围：
+
+- Android Studio 2024.3.2（243.26053.27.2432.13536105）：Plugin Verifier 通过，隔离 IDE 的导入、编辑器 Inlay、书架切换和重启恢复测试通过。
+- WebStorm 2025.1.5（251.28293.17）、CLion 2025.1.5.1（251.28293.43）：Plugin Verifier 通过。WebStorm 隔离启动测试因没有测试环境许可证而未完成。
+
+- IntelliJ IDEA 2026.2.3（262.10968.63）：Plugin Verifier 1.410 离线检查完整官方发行包通过，使用该发行包的 JBR 25 作为验证运行库；未在此版本运行 GUI 测试。
+
+二进制兼容检查不能替代完整界面操作验收，未逐个测试范围内所有 IDE、操作系统和补丁版本。
 
 ## 构建和测试
 
