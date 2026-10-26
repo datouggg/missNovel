@@ -19,6 +19,7 @@
             <action id="NovelInlay.Import" class="dev.novelinlay.ReaderActions$Import" text="导入 TXT 小说…"/>
             <action id="NovelInlay.Search" class="dev.novelinlay.ReaderActions$Search" text="搜索并下载小说…"/>
             <action id="NovelInlay.Visibility" class="dev.novelinlay.ReaderActions$Visibility" text="关闭小说显示"/>
+            <action id="NovelInlay.FollowCaret" class="dev.novelinlay.ReaderActions$FollowCaret" text="跟随光标"/>
             <action id="NovelInlay.DisplayLines" class="dev.novelinlay.ReaderActions$DisplayLines" text="设置显示行数…"/>
             <action id="NovelInlay.Chapters" class="dev.novelinlay.ReaderActions$Chapters" text="选择章节…"/>
             <action id="NovelInlay.Toggle" class="dev.novelinlay.ReaderActions$Toggle" text="切换自动 / 手动翻段"/>

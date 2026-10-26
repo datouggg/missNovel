@@ -167,6 +167,14 @@ public final class ReaderActions {
         }
     }
 
+    public static final class FollowCaret extends ToggleAction implements com.intellij.openapi.project.DumbAware {
+        @Override public ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.EDT; }
+        @Override public boolean isSelected(AnActionEvent e) { return NovelReader.getInstance().isFollowCaret(); }
+        @Override public void setSelected(AnActionEvent e, boolean selected) {
+            NovelReader.getInstance().setFollowCaret(selected);
+        }
+    }
+
     public static final class DisplayLines extends DumbAwareAction {
         @Override public void actionPerformed(AnActionEvent e) {
             var reader = NovelReader.getInstance();
