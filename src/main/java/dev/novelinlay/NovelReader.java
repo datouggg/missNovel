@@ -24,6 +24,7 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
         public boolean playing = true;
         public int intervalSeconds = 8;
         public boolean enabled = true;
+        public boolean followCaret = true;
         public int displayLines = 1;
         public Map<String, Integer> positions = new HashMap<>();
         public Map<String, Integer> offsets = new HashMap<>();
@@ -33,6 +34,7 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
     private ReaderState state = new ReaderState();
     private NovelBook book;
     private Inlay<NovelRenderer> inlay;
+    private RangeMarker anchor;
     private final Timer timer = new Timer(250, e -> tick());
     private boolean started;
     private boolean loading;
@@ -51,6 +53,7 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
         copy.playing = state.playing;
         copy.intervalSeconds = state.intervalSeconds;
         copy.enabled = state.enabled;
+        copy.followCaret = state.followCaret;
         copy.displayLines = state.displayLines;
         copy.positions = new HashMap<>(state.positions);
         copy.offsets = new HashMap<>(state.offsets);
@@ -62,6 +65,8 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
         if (!validInterval(value.intervalSeconds)) value.intervalSeconds = 8;
         if (!validDisplayLines(value.displayLines)) value.displayLines = 1;
         if (NovelShelf.validId(value.bookId) && !value.title.isBlank()) value.titles.putIfAbsent(value.bookId, value.title);
+        clearAnchor();
+        clearInlay();
         state = value;
         resetClock();
         renderKey = "";
@@ -159,6 +164,35 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
         resetClock();
         if (!enabled) { timer.stop(); clearInlay(); }
         else if (started && !disposed) timer.start();
+    }
+
+    public boolean isFollowCaret() { return state.followCaret; }
+
+    public synchronized void setFollowCaret(boolean followCaret) {
+        if (state.followCaret == followCaret) return;
+        state.followCaret = followCaret;
+        clearAnchor();
+        // Freeze the visible position even if the caret moved before the next timer tick.
+        if (!followCaret && inlay != null && inlay.isValid()) {
+            anchor = inlay.getEditor().getDocument().createRangeMarker(inlay.getOffset(), inlay.getOffset());
+        }
+        resetClock();
+        renderKey = "";
+        if (inlay != null && inlay.isValid()) render(inlay.getEditor());
+    }
+
+    private int displayOffset(Editor editor) {
+        if (state.followCaret) return editor.getCaretModel().getOffset();
+        if (anchor == null || !anchor.isValid() || anchor.getDocument() != editor.getDocument()) {
+            clearAnchor();
+            int offset = editor.getCaretModel().getOffset();
+            anchor = editor.getDocument().createRangeMarker(offset, offset);
+        }
+        return anchor.getStartOffset();
+    }
+
+    private void clearAnchor() {
+        if (anchor != null) { anchor.dispose(); anchor = null; }
     }
 
     static boolean validDisplayLines(int lines) { return lines >= 1 && lines <= 10; }
@@ -268,13 +302,13 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
 
     private void render(Editor editor) {
         if (!state.enabled || !hasBook()) { clearInlay(); return; }
-        int offset = editor.getCaretModel().getOffset();
+        int offset = displayOffset(editor);
         var visible = editor.getScrollingModel().getVisibleArea();
         var attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
         String key = offset + ":" + page() + ":" + state.playing + ":" + visible.width + ":" + visible.x
                 + ":" + position().offset() + ":" + state.displayLines
                 + ":" + editor.getColorsScheme().getEditorFontSize2D() + ":" + attributes;
-        if (inlay != null && inlay.isValid() && inlay.getOffset() == offset && key.equals(renderKey)) return;
+        if (inlay != null && inlay.isValid() && inlay.getEditor() == editor && inlay.getOffset() == offset && key.equals(renderKey)) return;
         clearInlay();
         String status = (page() + 1) + "/" + book.pages().size() + " · "
                 + (state.playing ? "自动 · " + state.intervalSeconds + "秒" : "手动 · 点击下一页");
@@ -291,7 +325,8 @@ public final class NovelReader implements PersistentStateComponent<NovelReader.R
     @Override public void dispose() {
         disposed = true;
         timer.stop();
-        if (ApplicationManager.getApplication().isDispatchThread()) clearInlay();
-        else ApplicationManager.getApplication().invokeLater(this::clearInlay, ModalityState.any());
+        Runnable cleanup = () -> { clearInlay(); clearAnchor(); };
+        if (ApplicationManager.getApplication().isDispatchThread()) cleanup.run();
+        else ApplicationManager.getApplication().invokeLater(cleanup, ModalityState.any());
     }
 }

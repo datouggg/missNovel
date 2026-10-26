@@ -65,11 +65,13 @@ public final class IdeSmokeTest implements ApplicationStarter {
                     if (restore) require(reader.position().toString().equals(Files.readString(PathManager.getConfigDir().resolve("expected-position.txt"))),
                             "actual IDE restart restores exact reading position");
                     if (restore) require(!reader.isEnabled() && reader.getDisplayLines() == 5, "restart keeps display closed and custom line count");
+                    if (restore) require(!reader.isFollowCaret(), "restart keeps follow-caret disabled");
+                    reader.setFollowCaret(true);
                     reader.setEnabled(true);
                     reader.setDisplayLines(1);
                     if (restore) require(reader.getIntervalSeconds() == 2 && !reader.isPlaying(), "restart restores custom interval and manual mode");
                     var legacy = XmlSerializer.deserialize(new org.jdom.Element("ReaderState"), NovelReader.ReaderState.class);
-                    require(legacy.intervalSeconds == 8 && legacy.enabled && legacy.displayLines == 1 && legacy.offsets.isEmpty(), "old settings remain compatible");
+                    require(legacy.intervalSeconds == 8 && legacy.enabled && legacy.followCaret && legacy.displayLines == 1 && legacy.offsets.isEmpty(), "old settings remain compatible");
                     require(ActionManager.getInstance().getAction("NovelInlay.Visibility") != null
                             && ActionManager.getInstance().getAction("NovelInlay.DisplayLines") != null, "display actions registered");
                     try { reader.setDisplayLines(0); throw new AssertionError("accepted zero lines"); }
@@ -101,6 +103,8 @@ public final class IdeSmokeTest implements ApplicationStarter {
                     render.invoke(reader, editor);
                     inlays = editor.getInlayModel().getBlockElementsInRange(0, document.getTextLength());
                     require(inlays.size() == 1 && inlays.getFirst().getOffset() == 0, "caret follow replaces old inlay");
+                    anchorTest(reader);
+                    render.invoke(reader, editor);
                     reader.turn(1000000);
                     require(!reader.isPlaying(), "stop at end");
                     reader.turn(-1000000);
@@ -156,16 +160,22 @@ public final class IdeSmokeTest implements ApplicationStarter {
                     render.invoke(reader, editor);
                     require(editor.getInlayModel().getBlockElementsInRange(0, document.getTextLength()).size() == 1
                             && reader.position().equals(beforeResize), "reopen restores same reading position");
+                    reader.setFollowCaret(false);
                     reader.setEnabled(false);
                     Files.writeString(PathManager.getConfigDir().resolve("expected-position.txt"), reader.position().toString());
                     var state = reader.getState();
                     var restored = XmlSerializer.deserialize(XmlSerializer.serialize(state), NovelReader.ReaderState.class);
                     require(restored.positions.equals(state.positions) && restored.bookId.equals(state.bookId) && restored.titles.equals(state.titles), "progress XML roundtrip");
-                    require(restored.intervalSeconds == 2 && !restored.playing && !restored.enabled && restored.displayLines == 5
+                    require(restored.intervalSeconds == 2 && !restored.playing && !restored.enabled && !restored.followCaret && restored.displayLines == 5
                             && restored.offsets.equals(state.offsets), "display, offsets, mode and interval XML roundtrip");
                     render.invoke(reader, editor);
                     require(document.getText().equals(original) && document.getModificationStamp() == stamp, "no source text or modification-stamp changes");
+                    var anchorField = NovelReader.class.getDeclaredField("anchor");
+                    anchorField.setAccessible(true);
+                    RangeMarker savedAnchor = (RangeMarker) anchorField.get(reader);
+                    require(savedAnchor != null && savedAnchor.isValid(), "hidden reader retains fixed anchor");
                     reader.dispose();
+                    require(!savedAnchor.isValid(), "dispose releases fixed anchor");
                     require(editor.getInlayModel().getBlockElementsInRange(0, document.getTextLength()).isEmpty(), "dispose removes inlay");
                 } catch (Throwable e) { failure.set(e); }
                 finally { if (editor != null) EditorFactory.getInstance().releaseEditor(editor); }
@@ -182,6 +192,77 @@ public final class IdeSmokeTest implements ApplicationStarter {
             error.printStackTrace();
             System.exit(1);
         }
+    }
+
+
+    private static void anchorTest(NovelReader reader) throws Exception {
+        var saved = reader.getState();
+        var render = NovelReader.class.getDeclaredMethod("render", Editor.class);
+        render.setAccessible(true);
+        var anchorField = NovelReader.class.getDeclaredField("anchor");
+        anchorField.setAccessible(true);
+        var factory = EditorFactory.getInstance();
+        Document document = factory.createDocument("first line\nsecond line\n");
+        Editor editor = factory.createEditor(document, null, EditorKind.MAIN_EDITOR);
+        Editor other = factory.createEditor(factory.createDocument(document.getText()), null, EditorKind.MAIN_EDITOR);
+        try {
+            reader.setFollowCaret(true);
+            reader.setEnabled(true);
+            editor.getCaretModel().moveToOffset(5);
+            render.invoke(reader, editor);
+            editor.getCaretModel().moveToOffset(12);
+            var action = (com.intellij.openapi.actionSystem.ToggleAction)
+                    ActionManager.getInstance().getAction("NovelInlay.FollowCaret");
+            require(action != null, "follow-caret toggle registered");
+            var event = com.intellij.openapi.actionSystem.AnActionEvent.createFromAnAction(action, null, "test",
+                    com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT);
+            require(action.isSelected(event), "follow-caret toggle selected by default");
+            action.setSelected(event, false);
+            require(!action.isSelected(event) && blockOffset(editor) == 5, "disable freezes visible inlay instead of moved caret");
+            RangeMarker first = (RangeMarker) anchorField.get(reader);
+            reader.turn(1);
+            reader.setDisplayLines(3);
+            render.invoke(reader, editor);
+            require(blockOffset(editor) == 5 && anchorField.get(reader) == first, "paging and layout refresh keep one fixed anchor");
+            reader.setEnabled(false);
+            editor.getCaretModel().moveToOffset(0);
+            reader.setEnabled(true);
+            render.invoke(reader, editor);
+            require(blockOffset(editor) == 5 && anchorField.get(reader) == first, "hide and show retain fixed document position");
+            com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, "// "));
+            render.invoke(reader, editor);
+            require(blockOffset(editor) == 8, "fixed anchor tracks document edits before it");
+            other.getCaretModel().moveToOffset(8);
+            render.invoke(reader, other);
+            require(!first.isValid() && blockOffset(other) == 8
+                    && editor.getInlayModel().getBlockElementsInRange(0, document.getTextLength()).isEmpty(),
+                    "switching documents releases old anchor and moves the sole inlay");
+            RangeMarker second = (RangeMarker) anchorField.get(reader);
+            reader.loadState(reader.getState());
+            require(!second.isValid() && anchorField.get(reader) == null, "settings reload releases anchor");
+            other.getCaretModel().moveToOffset(3);
+            render.invoke(reader, other);
+            require(blockOffset(other) == 3, "fixed mode initializes new anchor after reload");
+            RangeMarker reloaded = (RangeMarker) anchorField.get(reader);
+            other.getCaretModel().moveToOffset(10);
+            action.setSelected(event, true);
+            require(!reloaded.isValid() && anchorField.get(reader) == null && blockOffset(other) == 10,
+                    "re-enabling follow releases anchor and resumes caret tracking");
+            reader.setFollowCaret(false);
+            com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(null, () -> other.getDocument().deleteString(0, other.getDocument().getTextLength()));
+            render.invoke(reader, other);
+            require(blockOffset(other) == 0, "deleted anchor safely falls back to current caret");
+        } finally {
+            reader.loadState(saved);
+            factory.releaseEditor(editor);
+            factory.releaseEditor(other);
+        }
+    }
+
+    private static int blockOffset(Editor editor) {
+        var blocks = editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength());
+        require(blocks.size() == 1, "one inlay in active editor");
+        return blocks.getFirst().getOffset();
     }
 
     private static void shelfSwitchTest(Application app, NovelReader reader) throws Exception {
